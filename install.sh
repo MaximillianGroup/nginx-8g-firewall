@@ -60,6 +60,15 @@ else
     exit 1
 fi
 
+# Validate Nginx configuration after installing the firewall file
+echo ""
+echo "Validating Nginx configuration..."
+if ! nginx -t; then
+    echo -e "${RED}Error: Nginx configuration test failed after installing 8G Firewall.${NC}"
+    echo "Please review /etc/nginx/nginx.conf and $NGINX_CONF_DIR/8g-firewall.conf for errors."
+    exit 1
+fi
+echo -e "${GREEN}✓${NC} Nginx configuration is valid"
 # Create log directory if it doesn't exist
 LOG_DIR="/var/log/nginx"
 if [ ! -d "$LOG_DIR" ]; then
