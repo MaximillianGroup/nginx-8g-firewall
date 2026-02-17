@@ -1,4 +1,7 @@
-8G FIREWALL for Nginx
+<img width="1280" height="640" alt="8g-firewall" src="https://github.com/user-attachments/assets/44627767-7764-4642-9e17-c939132c74a1" />
+
+8G FIREWALL
+for Nginx
 =====================
 
 An Nginx translation of the [8G Firewall v1.5](https://perishablepress.com/8g-firewall/) by Perishable Press --- originally written for Apache/.htaccess.
