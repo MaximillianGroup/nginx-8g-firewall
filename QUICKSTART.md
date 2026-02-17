@@ -86,17 +86,31 @@ server {
 ## Verify It's Working
 
 ### Test 1: Normal Request (should work)
+
+**Note:** curl is blocked by default in the firewall. Use a web browser or temporarily comment out the curl blocking in `8g-firewall.conf` (line 55) for testing.
+
 ```bash
-curl https://your-domain.com
+# Option 1: Use a web browser to visit your domain
+# Open https://your-domain.com in Firefox, Chrome, etc.
+
+# Option 2: Temporarily allow curl for testing
+# Edit /etc/nginx/8g-firewall.conf and comment out line 55:
+# "~*(?i)(curl|wget|python-requests|libwww-perl|go-http-client|axios)" 1;
+# Then reload nginx: sudo systemctl reload nginx
+# After testing, uncomment the line to restore full protection
 ```
 
 ### Test 2: Malicious Pattern (should be blocked)
-```bash
-# This should be blocked
-curl "https://your-domain.com/?q=<script>alert(1)</script>"
 
-# This should also be blocked
-curl -A "sqlmap" https://your-domain.com
+Use a browser's developer console or a tool that's not blocked:
+
+```bash
+# Visit these URLs in a web browser - they should be blocked:
+# https://your-domain.com/?q=<script>alert(1)</script>
+# https://your-domain.com/?union+select+1,2,3
+
+# Or use wget (if not blocked) to test:
+wget "https://your-domain.com/?q=<script>alert(1)</script>"
 ```
 
 ### Test 3: Check Logs

@@ -200,22 +200,26 @@ http {
         # ====================================================================
         
         location /api/ {
-            # CORS headers (adjust as needed)
+            # Apply firewall first (before any conditional logic)
+            if ($block_all) {
+                return 444;
+            }
+            
+            # CORS headers - applied to all requests using 'always'
             add_header 'Access-Control-Allow-Origin' 'https://example.com' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type' always;
             
-            # Handle OPTIONS requests
+            # Handle OPTIONS preflight requests
             if ($request_method = 'OPTIONS') {
-                add_header 'Access-Control-Max-Age' 1728000;
-                add_header 'Content-Type' 'text/plain; charset=UTF-8';
-                add_header 'Content-Length' 0;
+                # Re-add CORS headers for OPTIONS (nginx doesn't inherit from parent in if blocks)
+                add_header 'Access-Control-Allow-Origin' 'https://example.com' always;
+                add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+                add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type' always;
+                add_header 'Access-Control-Max-Age' 1728000 always;
+                add_header 'Content-Type' 'text/plain; charset=UTF-8' always;
+                add_header 'Content-Length' 0 always;
                 return 204;
-            }
-            
-            # Apply firewall
-            if ($block_all) {
-                return 444;
             }
             
             # Proxy to backend API
