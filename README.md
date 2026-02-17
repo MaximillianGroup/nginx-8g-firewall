@@ -213,10 +213,20 @@ geo $whitelisted_ip {
 }
 
 # Then modify blocking logic
+# Use a helper variable to avoid nested if-statements (not supported in Nginx)
+set $block_request 0;
+
 if ($block_all) {
-    if ($whitelisted_ip = 0) {
-        return 444;
-    }
+    set $block_request 1;
+}
+
+# Whitelisted IPs bypass the block
+if ($whitelisted_ip) {
+    set $block_request 0;
+}
+
+if ($block_request) {
+    return 444;
 }
 ```
 
