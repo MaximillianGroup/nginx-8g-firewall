@@ -170,11 +170,11 @@ limit_req_zone $binary_remote_addr zone=8g_login:10m rate=2r/s;
 
 ### Logging
 
-Blocked requests are logged to `/var/log/nginx/8g-blocked.log` by default. To disable:
+Logging of blocked requests is disabled by default. To enable logging, uncomment the following line in `8g-firewall.conf`:
 
 ```nginx
-# Comment out this line in 8g-firewall.conf
-# access_log /var/log/nginx/8g-blocked.log blocked_8g if=$block_all;
+# In 8g-firewall.conf, remove the leading "#" from this line:
+access_log /var/log/nginx/8g-blocked.log blocked_8g if=$block_all;
 ```
 
 ### Security Headers
