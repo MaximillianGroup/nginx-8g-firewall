@@ -57,9 +57,16 @@ http {
         text/javascript
         application/json
         application/javascript
+        application/x-javascript
         application/xml+rss
         application/rss+xml
         application/atom+xml
+        application/xml
+        text/x-component
+        font/opentype
+        font/truetype
+        font/woff
+        font/woff2
         image/svg+xml;
     
     # ========================================================================
@@ -102,18 +109,9 @@ http {
         limit_req zone=8g_global burst=50 nodelay;
         
         # Block malicious requests identified by 8G Firewall
+        # Note: $block_all already includes checks for bad bots, referers, queries, URIs, and methods
         if ($block_all) {
             return 444;  # Close connection without response
-        }
-        
-        # Block bad bots
-        if ($bad_bot = 1) {
-            return 444;
-        }
-        
-        # Block bad referers
-        if ($block_referer = 1) {
-            return 403;
         }
         
         # ====================================================================

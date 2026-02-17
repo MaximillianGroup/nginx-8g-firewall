@@ -68,8 +68,13 @@ if [ ! -d "$LOG_DIR" ]; then
 fi
 
 # Set permissions
-chown -R nginx:nginx "$LOG_DIR" 2>/dev/null || chown -R www-data:www-data "$LOG_DIR" 2>/dev/null || true
-echo -e "${GREEN}✓${NC} Set permissions for log directory"
+if chown -R nginx:nginx "$LOG_DIR" 2>/dev/null; then
+    echo -e "${GREEN}✓${NC} Set ownership to nginx:nginx for log directory"
+elif chown -R www-data:www-data "$LOG_DIR" 2>/dev/null; then
+    echo -e "${GREEN}✓${NC} Set ownership to www-data:www-data for log directory"
+else
+    echo -e "${YELLOW}⚠${NC} Warning: Could not set ownership for $LOG_DIR (tried nginx:nginx and www-data:www-data)"
+fi
 
 echo ""
 echo "========================================================================="
