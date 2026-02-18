@@ -1,0 +1,140 @@
+# 8G FIREWALL CHANGEL0G
+# https://perishablepress.com/8g-firewall/
+
+
+Report bugs @ https://perishablepress.com/contact/
+
+
+@ v1.5 20250927
+
+General Changes
+
+- Adds note about AI Bot addon
+
+Changes to QUERY STRING rules
+
+- Replaces "request)" with "(?<!SAML)request)"
+- Removes "ghost"
+
+Changes to USER AGENT rules
+
+- Removes "nbot"
+- Adds: \\\"
+- Adds "antbot"
+- Adds "barkrowler"
+- Adds "babbar"
+- Adds "bitsightbot"
+- Adds "bytespider"
+- Adds "commoncrawl"
+- Adds "criteo"
+- Adds "dataforseo"
+- Adds "go-http-client"
+- Adds "hrankbot"
+- Adds "intelx"
+- Adds "scrapy"
+- Adds "seokicks"
+- Adds "seznambot"
+- Adds "tweetmemebot"
+- Adds "wellknownbot"
+- Adds "yisouspider"
+- Adds "zoominfobot"
+
+Changes to REQUEST URI rules
+
+- Replaces "e?chr" with "echr"
+- Removes "usage"
+
+Changes to HTTP REFERRER rules
+
+- Replaces x00 with \\x00
+- Adds %00
+
+Changes to HTTP COOKIE rules
+
+- Removed "%3C" and "%3E"
+
+
+
+@ v1.4 20250120
+
+Changes to REQUEST URI rules
+
+- Replaces "(wp-?)?install(ation)?" with "wp-?install|installation"
+- Replaces "cgi(\.|-)?" with "cgi(\.|-)"
+- Replaces "f?ckeditor" with "fckeditor"
+- Removes "administrator"
+- Removes "export.php"
+- Removes "install"
+- Removes "login"
+- Removes "bin"
+- Removes "home"
+
+Changes to QUERY STRING rules
+
+- Removes "char"
+
+Changes to USER AGENT rules
+
+- Adds "nbot"
+- Adds "claudebot"
+- Adds "crawlergo"
+- Adds "mozlila"
+- Adds "censysinspect"
+- Adds "imagesiftbot"
+- Adds "mauibot"
+- Removes "loader"
+
+
+
+@ v1.3 20240222
+
+- Takes out of beta testing
+- Adds "sftp.json" to Request URI rules
+- Removes "logins?" from Request URI rules
+- Improves Local File Inclusion (LFI) protection
+- Adds ".msi" to Request URI rules
+- Adds ".bat" to Request URI rules
+- Removes "wget" from User Agent rules
+- Removes "phpmyadmin" et al from Request URI rules
+- Removes "tmp" from Request URI rules
+- Replaces "php(.+)" with "php([^\/])" in Request URI rules
+- Adds "replace" to Command Injection Query String rules
+- Removes "blog" from Request URI rules
+- Replaces "demon" with "(\b)demon(\b)" in User Agent rules
+- Removes "cy_cho" from User Agent rules
+- Replaces "load_file" with "(\b)load_file" in Query String rules
+- Replaces "(wso)?1337" with "wso1337" in Request URI rules
+- Adds "awario" to User Agent rules
+- Replaces "backdorbot" with "backdor" User Agent rules
+- Replaces "blexbot" with "blex" User Agent rules
+- Removes "c99" from Query String rules
+- Removes "c99" from Request URI rules
+- Re-orders some rules/regex
+
+
+
+@ v1.2 20230423 (beta)
+
+- Removes "L" flag from core rewrite rules
+- Improves "(boot)" regex in Request URI rules
+- Improves "ckeditor" regex in Query String & Request URI
+- Fixes incorrect flag value in Cookie logging rewrite rule
+- Removes "/admin/" from Request URI rules
+- Adds "x00" to Referrer rules
+- Re-orders some rules/regex
+
+
+
+@ v1.1 20230214 (beta)
+
+- Improves regex for config rules
+- Improves regex for .php(+) extension
+- Adds mopub.com to Referrer rules
+- Re-orders some rules/regex
+
+
+
+@ v1.0 0230209 (beta)
+
+- Initial release
+
