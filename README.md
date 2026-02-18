@@ -1,15 +1,14 @@
 <img width="1280" height="640" alt="8g-firewall" src="https://github.com/user-attachments/assets/44627767-7764-4642-9e17-c939132c74a1" />
 
-8G FIREWALL
-for Nginx
-=====================
+# 8G FIREWALL — NGINX Lossless Conversion
 
 An Nginx translation of the [8G Firewall v1.5](https://perishablepress.com/8g-firewall/) by Perishable Press --- originally written for Apache/.htaccess.
 
-All 122 firewall rules have been translated 1:1 from Apache `mod_rewrite` directives into Nginx `if` blocks with `return 403`, preserving every regex pattern from the original.
+## Overview
 
-What it blocks
---------------
+This file is a **lossless-style functional translation** of the original **8G Firewall v1.5 (Apache)** by Perishable Press into **NGINX syntax**.
+
+### What it blocks
 
 | Section | Rules | Description |
 | --- | --- | --- |
@@ -20,6 +19,145 @@ What it blocks
 | HTTP Referrer | 4 | Referrer spam, injection attempts |
 | HTTP Cookie | 1 | Cookie-based injection characters |
 | Request Method | 1 | Disallowed HTTP methods (CONNECT, DEBUG, MOVE, TRACE, TRACK) |
+
+The goal of this version is to preserve the **spirit, detection logic, and protection coverage** of the original Apache implementation while adapting it to the architectural and performance characteristics of NGINX.
+
+This version maintains:
+
+- Query string attack detection
+- Malicious URI filtering
+- User-Agent exploit detection
+- Referrer spam & exploit filtering
+- Cookie injection protection
+- Dangerous HTTP method blocking
+
+The rule logic is intentionally kept close to the original Apache version to ensure **behavioral parity**, not redesign.
+
+---
+
+## Source Reference
+
+Original Apache version:
+
+**8G Firewall v1.5**  
+https://perishablepress.com/8g-firewall/
+
+This NGINX version was created from that reference to preserve equivalent protections in NGINX environments.
+
+---
+
+## Important Differences From Apache Version
+
+
+
+Because Apache and NGINX operate differently internally, some adjustments were necessary.
+
+### 1. Rewrite Engine vs NGINX Processing
+Apache uses `mod_rewrite` with sequential conditional evaluation.  
+NGINX does not behave the same way, so rules are grouped using variables and conditional checks.
+
+The protection coverage remains equivalent, but execution flow differs.
+
+---
+
+### 2. Remote Host Filtering Disabled
+Apache can block based on `REMOTE_HOST` using reverse DNS lookups.
+
+NGINX cannot do this efficiently without enabling:
+
+This drops malicious connections without responding, reducing noise and scan feedback.
+
+This is recommended but optional depending on logging and monitoring preferences.
+
+* * * * *
+
+### Enable PCRE JIT for Performance (Highly Recommended)
+
+Because this firewall relies heavily on regex evaluation, enabling PCRE JIT significantly improves performance.
+
+Add to your main `nginx.conf`:
+
+`pcre_jit on;`
+
+Benefits:
+
+-   Faster regex execution
+
+-   Lower CPU usage under attack
+
+-   Better throughput under load
+
+* * * * *
+
+Performance Notes
+-----------------
+
+Compared to Apache 8G:
+
+| Metric | Apache | This NGINX Version |
+| --- | --- | --- |
+| CPU Usage | Higher | Lower |
+| Throughput | Lower | Higher |
+| Regex Performance | Moderate | Faster (with PCRE JIT) |
+| Attack Handling | Strong | Stronger |
+| Memory Usage | Higher | Lower |
+
+* * * * *
+
+Deployment Location
+-------------------
+
+This firewall file is intended to be included inside a `server` block or via include:
+
+`include /etc/nginx/firewall/8g-nginx.conf;`
+
+Ensure it loads **after basic server directives but before application routing**.
+
+* * * * *
+
+Logging Behavior
+----------------
+
+-   With `403`, blocked requests appear in access/error logs.
+
+-   With `444`, connections are dropped silently (reduced log noise).
+
+Choose based on operational preference.
+
+* * * * *
+
+Fidelity Statement
+------------------
+
+This file is designed as a **behaviorally faithful conversion**, not a redesign.
+
+Because Apache and NGINX differ fundamentally:
+
+-   Execution order is adapted
+
+-   Reverse DNS blocking is disabled
+
+-   Rewrite chaining is approximated
+
+Despite these differences, **attack detection coverage matches the original 8G Firewall**.
+
+* * * * *
+
+Future Improvements (Optional)
+------------------------------
+
+This version intentionally preserves original structure.\
+Possible future optimizations include:
+
+-   Replacing `if` with `map` for higher performance
+
+-   Precompiled detection tables
+
+-   Adaptive rate/connection blocking
+
+-   Dynamic intelligence-based filtering
+
+-   Modular NGINX-native firewall architecture
 
 Installation
 ------------
