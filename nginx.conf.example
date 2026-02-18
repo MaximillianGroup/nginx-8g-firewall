@@ -44,6 +44,15 @@ http {
     # ========================================================================
     include /etc/nginx/8g-firewall.conf;
     
+    # Map to handle API blocking logic - avoids problematic multiple if blocks
+    # This map combines firewall blocking with OPTIONS handling into mutually exclusive conditions
+    # Priority order: 1) Block if firewall triggered, 2) Handle OPTIONS, 3) Proxy normally
+    map "$block_all:$request_method" $api_action {
+        default "proxy";           # Normal request - proxy to backend
+        "~^1:"  "block";           # Firewall triggered (block_all=1) - block regardless of method
+        "~^0:OPTIONS" "options";   # OPTIONS preflight when not blocked - return 204
+    }
+    
     # Gzip compression
     gzip on;
     gzip_vary on;
@@ -200,18 +209,22 @@ http {
         # ====================================================================
         
         location /api/ {
-            # Apply firewall first (before any conditional logic)
-            if ($block_all) {
-                return 444;
-            }
-            
             # CORS headers - applied to all requests using 'always'
             add_header 'Access-Control-Allow-Origin' 'https://example.com' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type' always;
             
-            # Handle OPTIONS preflight requests
-            if ($request_method = 'OPTIONS') {
+            # Use map-based routing to avoid multiple if-block issues
+            # The $api_action variable ensures mutually exclusive conditions:
+            # - "block": firewall triggered (returns 444 immediately)
+            # - "options": OPTIONS preflight when not blocked (returns 204)
+            # - "proxy": normal request (proxies to backend)
+            
+            if ($api_action = "block") {
+                return 444;  # Firewall blocked - close connection
+            }
+            
+            if ($api_action = "options") {
                 # Re-add CORS headers for OPTIONS (nginx doesn't inherit from parent in if blocks)
                 add_header 'Access-Control-Allow-Origin' 'https://example.com' always;
                 add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
@@ -219,10 +232,10 @@ http {
                 add_header 'Access-Control-Max-Age' 1728000 always;
                 add_header 'Content-Type' 'text/plain; charset=UTF-8' always;
                 add_header 'Content-Length' 0 always;
-                return 204;
+                return 204;  # OPTIONS preflight response
             }
             
-            # Proxy to backend API
+            # Default action when $api_action = "proxy": proxy to backend API
             proxy_pass http://localhost:8080;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
