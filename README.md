@@ -2,11 +2,11 @@
 
 An Nginx implementation of the [8G Firewall](https://perishablepress.com/8g-firewall/) by [Perishable Press](https://perishablepress.com/). This provides robust, server-level protection against common web attacks and malicious traffic.
 
-## About
+## Overview
 
-The 8G Firewall is a powerful security ruleset created by Jeff Starr (Perishable Press) to protect web servers from various online threats. This repository contains an Nginx-compatible version that can be easily included in your existing Nginx configuration.
+This file is a **lossless-style functional translation** of the original **8G Firewall v1.5 (Apache)** by Perishable Press into **NGINX syntax**.
 
-## Features
+### What it blocks
 
 The 8G Firewall protects against:
 
@@ -19,6 +19,177 @@ The 8G Firewall protects against:
 - **Dangerous HTTP Methods** - Blocks TRACE, TRACK, and other risky methods
 - **Rate Limiting** - Prevents brute force and DoS attacks
 - **Security Headers** - Adds modern security headers to responses
+The goal of this version is to preserve the **spirit, detection logic, and protection coverage** of the original Apache implementation while adapting it to the architectural and performance characteristics of NGINX.
+
+This version maintains:
+
+- Query string attack detection
+- Malicious URI filtering
+- User-Agent exploit detection
+- Referrer spam & exploit filtering
+- Cookie injection protection
+- Dangerous HTTP method blocking
+
+The rule logic is intentionally kept close to the original Apache version to ensure **behavioral parity**, not redesign.
+
+---
+
+## Source Reference
+
+Original Apache version:
+
+**8G Firewall v1.5**  
+https://perishablepress.com/8g-firewall/
+
+This NGINX version was created from that reference to preserve equivalent protections in NGINX environments.
+
+---
+
+## Important Differences From Apache Version
+
+
+
+Because Apache and NGINX operate differently internally, some adjustments were necessary.
+
+### 1. Rewrite Engine vs NGINX Processing
+Apache uses `mod_rewrite` with sequential conditional evaluation.  
+NGINX does not behave the same way, so rules are grouped using variables and conditional checks.
+
+The protection coverage remains equivalent, but execution flow differs.
+
+---
+
+### 2. Remote Host Filtering Disabled
+Apache can block based on `REMOTE_HOST` using reverse DNS lookups.
+
+NGINX cannot do this efficiently without enabling:
+
+This drops malicious connections without responding, reducing noise and scan feedback.
+
+This is recommended but optional depending on logging and monitoring preferences.
+
+his causes major performance degradation and is **intentionally disabled** in this version.
+
+---
+
+### 3. Consolidated Regex Evaluation
+Apache evaluates many sequential rewrite conditions.  
+NGINX performs better when patterns are grouped, so regex rules are consolidated to reduce processing overhead while maintaining detection coverage.
+
+---
+
+### 4. Curl Behavior Adjusted
+The original 8G blocks all `curl`.  
+This version blocks only **malicious curl usage** (scanner/exploit patterns), allowing legitimate curl usage for APIs, health checks, and automation.
+
+---
+
+## Recommended Configuration Enhancements
+
+### Use Silent Drop (444) Instead of 403
+
+By default, 8G returns HTTP 403.  
+NGINX supports a stealth option:
+
+```nginx
+return 444;
+
+```
+
+This drops malicious connections without responding, reducing noise and scan feedback. This is recommended but optional depending on logging and monitoring preferences.
+
+* * * * *
+
+### Enable PCRE JIT for Performance (Highly Recommended)
+
+Because this firewall relies heavily on regex evaluation, enabling PCRE JIT significantly improves performance.
+
+Add to your main `nginx.conf`:
+
+`pcre_jit on;`
+
+Benefits:
+
+-   Faster regex execution
+
+-   Lower CPU usage under attack
+
+-   Better throughput under load
+
+* * * * *
+
+Performance Notes
+-----------------
+
+Compared to Apache 8G:
+
+| Metric | Apache | This NGINX Version |
+| --- | --- | --- |
+| CPU Usage | Higher | Lower |
+| Throughput | Lower | Higher |
+| Regex Performance | Moderate | Faster (with PCRE JIT) |
+| Attack Handling | Strong | Stronger |
+| Memory Usage | Higher | Lower |
+
+* * * * *
+
+Deployment Location
+-------------------
+
+This firewall file is intended to be included inside a `server` block or via include:
+
+`include /etc/nginx/firewall/8g-nginx.conf;`
+
+Ensure it loads **after basic server directives but before application routing**.
+
+* * * * *
+
+Logging Behavior
+----------------
+
+-   With `403`, blocked requests appear in access/error logs.
+
+-   With `444`, connections are dropped silently (reduced log noise).
+
+Choose based on operational preference.
+
+* * * * *
+
+Fidelity Statement
+------------------
+
+This file is designed as a **behaviorally faithful conversion**, not a redesign.
+
+Because Apache and NGINX differ fundamentally:
+
+-   Execution order is adapted
+
+-   Reverse DNS blocking is disabled
+
+-   Rewrite chaining is approximated
+
+Despite these differences, **attack detection coverage matches the original 8G Firewall**.
+
+* * * * *
+
+Future Improvements (Optional)
+------------------------------
+
+This version intentionally preserves original structure.\
+Possible future optimizations include:
+
+-   Replacing `if` with `map` for higher performance
+
+-   Precompiled detection tables
+
+-   Adaptive rate/connection blocking
+
+-   Dynamic intelligence-based filtering
+
+-   Modular NGINX-native firewall architecture
+
+Installation
+------------
 
 ## Installation
 
