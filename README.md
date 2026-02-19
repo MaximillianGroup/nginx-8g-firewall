@@ -1,6 +1,11 @@
+
+<img width="1280" height="640" alt="8g-firewall" src="https://github.com/user-attachments/assets/9baece3e-d9e4-4339-a45c-5f130f2a6a7f" />
+
 # 8G Firewall for Nginx
 
 An Nginx implementation of the [8G Firewall](https://perishablepress.com/8g-firewall/) by [Perishable Press](https://perishablepress.com/). This provides robust, server-level protection against common web attacks and malicious traffic.
+
+[![Copilot coding agent](https://github.com/MaximillianGroup/nginx-8g-firewall/actions/workflows/copilot-swe-agent/copilot/badge.svg)](https://github.com/MaximillianGroup/nginx-8g-firewall/actions/workflows/copilot-swe-agent/copilot)  [![Copilot code review](https://github.com/MaximillianGroup/nginx-8g-firewall/actions/workflows/copilot-pull-request-reviewer/copilot-pull-request-reviewer/badge.svg)](https://github.com/MaximillianGroup/nginx-8g-firewall/actions/workflows/copilot-pull-request-reviewer/copilot-pull-request-reviewer)
 
 ## Overview
 
