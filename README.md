@@ -69,6 +69,36 @@ This drops malicious connections without responding, reducing noise and scan fee
 
 This is recommended but optional depending on logging and monitoring preferences.
 
+his causes major performance degradation and is **intentionally disabled** in this version.
+
+---
+
+### 3. Consolidated Regex Evaluation
+Apache evaluates many sequential rewrite conditions.  
+NGINX performs better when patterns are grouped, so regex rules are consolidated to reduce processing overhead while maintaining detection coverage.
+
+---
+
+### 4. Curl Behavior Adjusted
+The original 8G blocks all `curl`.  
+This version blocks only **malicious curl usage** (scanner/exploit patterns), allowing legitimate curl usage for APIs, health checks, and automation.
+
+---
+
+## Recommended Configuration Enhancements
+
+### Use Silent Drop (444) Instead of 403
+
+By default, 8G returns HTTP 403.  
+NGINX supports a stealth option:
+
+```nginx
+return 444;
+
+```
+
+This drops malicious connections without responding, reducing noise and scan feedback. This is recommended but optional depending on logging and monitoring preferences.
+
 * * * * *
 
 ### Enable PCRE JIT for Performance (Highly Recommended)
