@@ -1,0 +1,281 @@
+# ========================================================================
+# EXAMPLE NGINX CONFIGURATION WITH 8G FIREWALL
+# ========================================================================
+# 
+# This is a complete example showing how to integrate the 8G Firewall
+# into your Nginx configuration. Copy and adapt as needed.
+#
+# ========================================================================
+
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    
+    # Hide Nginx version
+    server_tokens off;
+    
+    # Basic settings
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    
+    # Logging
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+    
+    access_log /var/log/nginx/access.log main;
+    
+    # ========================================================================
+    # INCLUDE 8G FIREWALL - This is the key line!
+    # ========================================================================
+    include /etc/nginx/8g-firewall.conf;
+    
+    # Map to handle API blocking logic - avoids problematic multiple if blocks
+    # This map combines firewall blocking with OPTIONS handling into mutually exclusive conditions
+    # Priority order: 1) Block if firewall triggered, 2) Handle OPTIONS, 3) Proxy normally
+    map "$block_all:$request_method" $api_action {
+        default "proxy";           # Normal request - proxy to backend
+        "~^1:"  "block";           # Firewall triggered (block_all=1) - block regardless of method
+        "~^0:OPTIONS" "options";   # OPTIONS preflight when not blocked - return 204
+    }
+    
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_comp_level 5;
+    gzip_min_length 256;
+    gzip_proxied any;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/x-javascript
+        application/xml+rss
+        application/rss+xml
+        application/atom+xml
+        application/xml
+        text/x-component
+        font/opentype
+        font/truetype
+        font/woff
+        font/woff2
+        image/svg+xml;
+    
+    # ========================================================================
+    # HTTP to HTTPS Redirect (Port 80)
+    # ========================================================================
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+        server_name _;
+        
+        # Redirect all HTTP traffic to HTTPS
+        return 301 https://$host$request_uri;
+    }
+    
+    # ========================================================================
+    # HTTPS Server with 8G Firewall Protection
+    # ========================================================================
+    server {
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+        server_name example.com www.example.com;
+        
+        # SSL Configuration
+        ssl_certificate /etc/ssl/certs/example.com.crt;
+        ssl_certificate_key /etc/ssl/private/example.com.key;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers on;
+        
+        # Root directory
+        root /var/www/html;
+        index index.html index.htm index.php;
+        
+        # ====================================================================
+        # 8G FIREWALL ACTIVATION
+        # ====================================================================
+        
+        # Apply rate limiting from 8G Firewall
+        limit_conn 8g_conn 20;
+        limit_req zone=8g_global burst=50 nodelay;
+        
+        # Block malicious requests identified by 8G Firewall
+        # Note: $block_all already includes checks for bad bots, referers, queries, URIs, and methods
+        if ($block_all) {
+            return 444;  # Close connection without response
+        }
+        
+        # ====================================================================
+        # Application-Specific Locations
+        # ====================================================================
+        
+        # Main location
+        location / {
+            try_files $uri $uri/ /index.php?$query_string;
+        }
+        
+        # Deny access to hidden files
+        location ~ /\. {
+            deny all;
+            access_log off;
+            log_not_found off;
+        }
+        
+        # PHP Processing (if using PHP-FPM)
+        location ~ \.php$ {
+            try_files $uri =404;
+            fastcgi_pass unix:/run/php-fpm/www.sock;  # Adjust for your setup
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            include fastcgi_params;
+        }
+        
+        # Static files caching
+        location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
+            expires 30d;
+            add_header Cache-Control "public, immutable";
+            access_log off;
+        }
+        
+        # ====================================================================
+        # WordPress-Specific Protection (if applicable)
+        # ====================================================================
+        
+        # Protect wp-login.php with stricter rate limiting
+        location = /wp-login.php {
+            limit_req zone=8g_login burst=3 nodelay;
+            
+            fastcgi_pass unix:/run/php-fpm/www.sock;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            include fastcgi_params;
+        }
+        
+        # Protect xmlrpc.php
+        location = /xmlrpc.php {
+            limit_req zone=8g_login burst=3 nodelay;
+            
+            fastcgi_pass unix:/run/php-fpm/www.sock;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            include fastcgi_params;
+        }
+        
+        # Block access to WordPress configuration files
+        location ~* (wp-config\.php|wp-config\.txt|wp-config\.bak) {
+            deny all;
+        }
+        
+        # ====================================================================
+        # Admin Area Protection (optional - customize path)
+        # ====================================================================
+        
+        location ^~ /admin/ {
+            # Require HTTP Basic Authentication
+            auth_basic "Admin Area - Restricted Access";
+            auth_basic_user_file /etc/nginx/.htpasswd;
+            
+            # Apply firewall
+            if ($block_all) {
+                return 444;
+            }
+            
+            # Additional security headers
+            add_header X-Frame-Options "DENY" always;
+            
+            try_files $uri $uri/ /admin/index.php?$query_string;
+        }
+        
+        # ====================================================================
+        # API Endpoints (example)
+        # ====================================================================
+        
+        location /api/ {
+            # CORS headers - applied to all requests using 'always'
+            add_header 'Access-Control-Allow-Origin' 'https://example.com' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type' always;
+            
+            # Use map-based routing to avoid multiple if-block issues
+            # The $api_action variable ensures mutually exclusive conditions:
+            # - "block": firewall triggered (returns 444 immediately)
+            # - "options": OPTIONS preflight when not blocked (returns 204)
+            # - "proxy": normal request (proxies to backend)
+            
+            if ($api_action = "block") {
+                return 444;  # Firewall blocked - close connection
+            }
+            
+            if ($api_action = "options") {
+                # Re-add CORS headers for OPTIONS (nginx doesn't inherit from parent in if blocks)
+                add_header 'Access-Control-Allow-Origin' 'https://example.com' always;
+                add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+                add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type' always;
+                add_header 'Access-Control-Max-Age' 1728000 always;
+                add_header 'Content-Type' 'text/plain; charset=UTF-8' always;
+                add_header 'Content-Length' 0 always;
+                return 204;  # OPTIONS preflight response
+            }
+            
+            # Default action when $api_action = "proxy": proxy to backend API
+            proxy_pass http://localhost:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+        
+        # ====================================================================
+        # Error Pages
+        # ====================================================================
+        
+        error_page 403 /403.html;
+        error_page 404 /404.html;
+        error_page 500 502 503 504 /50x.html;
+        
+        location = /403.html {
+            root /usr/share/nginx/html;
+            internal;
+        }
+        
+        location = /404.html {
+            root /usr/share/nginx/html;
+            internal;
+        }
+        
+        location = /50x.html {
+            root /usr/share/nginx/html;
+            internal;
+        }
+    }
+    
+    # ========================================================================
+    # Additional Server Blocks (if needed)
+    # ========================================================================
+    
+    # Include additional site configurations
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+}
+
+# ========================================================================
+# END OF CONFIGURATION
+# ========================================================================

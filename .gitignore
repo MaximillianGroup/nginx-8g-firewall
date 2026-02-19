@@ -1,0 +1,26 @@
+# Test files
+test-nginx.conf
+*.test
+
+# Log files
+*.log
+
+# Nginx temporary files
+*.pid
+*.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Backup files
+*.bak
+*.backup
+*.old
