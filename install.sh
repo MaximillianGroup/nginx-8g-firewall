@@ -52,11 +52,18 @@ echo "Installing 8G Firewall..."
 echo ""
 
 # Copy the firewall configuration
-if [ -f "8g-firewall.conf" ]; then
-    cp 8g-firewall.conf "$NGINX_CONF_DIR/8g-firewall.conf"
-    echo -e "${GREEN}✓${NC} Copied 8g-firewall.conf to $NGINX_CONF_DIR/"
+FIREWALL_SRC="nginx/snippets/firewall.conf"
+if [ -f "$FIREWALL_SRC" ]; then
+    # Install to /etc/nginx/snippets/ (create directory if needed)
+    SNIPPETS_DIR="$NGINX_CONF_DIR/snippets"
+    if [ ! -d "$SNIPPETS_DIR" ]; then
+        mkdir -p "$SNIPPETS_DIR"
+        echo -e "${GREEN}✓${NC} Created snippets directory: $SNIPPETS_DIR"
+    fi
+    cp "$FIREWALL_SRC" "$NGINX_CONF_DIR/snippets/8g-firewall.conf"
+    echo -e "${GREEN}✓${NC} Copied $FIREWALL_SRC to $NGINX_CONF_DIR/snippets/8g-firewall.conf"
 else
-    echo -e "${RED}Error: 8g-firewall.conf not found in current directory${NC}"
+    echo -e "${RED}Error: $FIREWALL_SRC not found. Run this script from the repository root.${NC}"
     exit 1
 fi
 
@@ -65,7 +72,7 @@ echo ""
 echo "Validating Nginx configuration..."
 if ! nginx -t; then
     echo -e "${RED}Error: Nginx configuration test failed after installing 8G Firewall.${NC}"
-    echo "Please review /etc/nginx/nginx.conf and $NGINX_CONF_DIR/8g-firewall.conf for errors."
+    echo "Please review /etc/nginx/nginx.conf and $NGINX_CONF_DIR/snippets/8g-firewall.conf for errors."
     exit 1
 fi
 echo -e "${GREEN}✓${NC} Nginx configuration is valid"
@@ -93,7 +100,7 @@ echo ""
 echo -e "${YELLOW}Next Steps:${NC}"
 echo ""
 echo "1. Add this line to your nginx.conf in the http {} block:"
-echo "   ${GREEN}include /etc/nginx/8g-firewall.conf;${NC}"
+echo "   ${GREEN}include /etc/nginx/snippets/8g-firewall.conf;${NC}"
 echo ""
 echo "2. Add firewall activation to your server blocks:"
 echo "   ${GREEN}limit_conn 8g_conn 20;${NC}"
@@ -107,6 +114,6 @@ echo "4. Reload Nginx:"
 echo "   ${GREEN}sudo systemctl reload nginx${NC}"
 echo ""
 echo "For detailed instructions, see README.md"
-echo "For an example configuration, see nginx.conf.example"
+echo "For a complete example configuration, see nginx/nginx.conf"
 echo ""
 echo "========================================================================="
