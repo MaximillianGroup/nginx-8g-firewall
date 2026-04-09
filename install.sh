@@ -60,8 +60,8 @@ if [ -f "$FIREWALL_SRC" ]; then
         mkdir -p "$SNIPPETS_DIR"
         echo -e "${GREEN}✓${NC} Created snippets directory: $SNIPPETS_DIR"
     fi
-    cp "$FIREWALL_SRC" "$NGINX_CONF_DIR/snippets/8g-firewall.conf"
-    echo -e "${GREEN}✓${NC} Copied $FIREWALL_SRC to $NGINX_CONF_DIR/snippets/8g-firewall.conf"
+    cp "$FIREWALL_SRC" "$SNIPPETS_DIR/8g-firewall.conf"
+    echo -e "${GREEN}✓${NC} Copied $FIREWALL_SRC to $SNIPPETS_DIR/8g-firewall.conf"
 else
     echo -e "${RED}Error: $FIREWALL_SRC not found. Run this script from the repository root.${NC}"
     exit 1
