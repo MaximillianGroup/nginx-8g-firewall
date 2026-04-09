@@ -248,7 +248,7 @@ sudo mkdir -p /etc/nginx/snippets
 sudo cp nginx/snippets/firewall.conf /etc/nginx/snippets/8g-firewall.conf
 ```
 
-> **Note:** If you prefer the `if`-based alternative, copy `nginx/snippets/8G_firewall.conf` instead and include it inside your `server {}` block (see step 3b).
+> **Note:** If you prefer the `if`-based alternative, copy `nginx/snippets/8G_firewall.conf` to `/etc/nginx/snippets/8G_firewall.conf` instead and include it inside your `server {}` block (see Option B in step 3).
 
 ### 3. Include in Nginx Configuration
 
