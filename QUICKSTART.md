@@ -97,7 +97,7 @@ server {
 
 ### Test 1: Normal Request (should work)
 
-**Note:** curl is blocked by default in the firewall. Use a web browser or temporarily comment out the curl blocking in `nginx/snippets/firewall.conf` for testing.
+**Note:** curl is blocked by default in the firewall. Use a web browser or temporarily comment out the curl blocking in the installed file `/etc/nginx/snippets/8g-firewall.conf` for testing (this file is copied from `nginx/snippets/firewall.conf` during installation).
 
 ```bash
 # Option 1: Use a web browser to visit your domain
