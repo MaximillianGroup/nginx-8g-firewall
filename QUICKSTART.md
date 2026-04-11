@@ -250,7 +250,7 @@ Common issues:
 
 - Read the full [README.md](README.md) for detailed documentation
 - Review [nginx/nginx.conf](nginx/nginx.conf) for a complete example configuration
-- Customize the firewall rules in `nginx/snippets/firewall.conf` for your specific needs
+- Customize the firewall rules in `nginx/snippets/firewall.conf` before copying/installing, or edit the installed file at `/etc/nginx/snippets/8g-firewall.conf` after installation
 - Enable logging to monitor blocked requests
 - Set up rate limiting appropriate for your traffic patterns
 
