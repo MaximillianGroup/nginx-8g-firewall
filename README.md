@@ -371,7 +371,7 @@ location ^~ /admin/ {
 
 ### Custom IP Blocking
 
-Add your own IP blocks in the `firewall.conf` file (`geo $blocked_ip` section):
+Add your own IP blocks in the installed `/etc/nginx/snippets/8g-firewall.conf` file (copied from `firewall.conf` in this repository), in the `geo $blocked_ip` section:
 
 ```nginx
 geo $blocked_ip {
