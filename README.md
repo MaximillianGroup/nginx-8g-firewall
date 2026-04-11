@@ -392,7 +392,7 @@ The firewall creates three rate limiting zones:
 - `8g_login` - 2 requests/second per IP (for login pages)
 - `8g_conn` - Connection limit per IP
 
-Adjust these in `nginx/snippets/firewall.conf` if needed:
+Adjust these in `nginx/snippets/firewall.conf` (or `/etc/nginx/snippets/8g-firewall.conf` if you have already installed the snippet) if needed:
 
 ```nginx
 limit_req_zone $binary_remote_addr zone=8g_global:10m rate=10r/s;
@@ -401,10 +401,10 @@ limit_req_zone $binary_remote_addr zone=8g_login:10m rate=2r/s;
 
 ### Logging
 
-Logging of blocked requests is disabled by default. To enable logging, uncomment the following line in `nginx/snippets/firewall.conf`:
+Logging of blocked requests is disabled by default. To enable logging, uncomment the following line in `nginx/snippets/firewall.conf` (or `/etc/nginx/snippets/8g-firewall.conf` if you have already installed the snippet):
 
 ```nginx
-# In nginx/snippets/firewall.conf, remove the leading "#" from this line:
+# Remove the leading "#" from this line:
 access_log /var/log/nginx/8g-blocked.log blocked_8g if=$block_all;
 ```
 
