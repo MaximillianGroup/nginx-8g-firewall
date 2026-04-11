@@ -3,7 +3,7 @@
 
 This directory contains the **Nginx** port of the famous [8G Firewall](https://perishablepress.com/8g-firewall/) by Perishable Press.
 
-The original firewall is written for Apache (.htaccess). This version has been translated, optimized, and formatted specifically for Nginx server blocks.
+The original firewall is written for Apache (.htaccess). This version has been translated and optimized for Nginx, and this directory provides both an `http {}`-context, map-based option and a `server {}`-context, if-based option.
 
 ---
 
