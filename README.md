@@ -410,7 +410,7 @@ access_log /var/log/nginx/8g-blocked.log blocked_8g if=$block_all;
 
 ### Security Headers
 
-Security headers are enabled by default. To customize, edit the headers section in `nginx/snippets/firewall.conf`:
+Security headers are enabled by default. To customize, edit the headers section in `nginx/snippets/firewall.conf` (or `/etc/nginx/snippets/8g-firewall.conf` if you installed the snippet there):
 
 ```nginx
 add_header X-Frame-Options "SAMEORIGIN" always;
