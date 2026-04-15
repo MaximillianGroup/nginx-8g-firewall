@@ -15,7 +15,7 @@ nginx-8g-firewall/
 │   ├── snippets/
 │   │   ├── firewall.conf       ← RECOMMENDED: map-based version, include in http {} block
 │   │   └── 8G_firewall.conf    ← ALTERNATIVE: if-based version, include in server {} block
-│   └── nginx.conf              ← Complete nginx.conf example showing full integration
+│   └── nginx.conf              ← Example nginx.conf reference configuration
 ├── apache/
 │   ├── 8g_firewall.txt         ← Original Apache .htaccess source (reference only)
 │   └── 8G-Changelog.txt        ← Upstream changelog
