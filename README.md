@@ -283,20 +283,22 @@ server {
 }
 ```
 
-### 4. Activate in Server Blocks
+### 4. Activate in Server Blocks (Option A only)
 
-Add the blocking logic to your server blocks:
+> **Option B users:** skip this step. `8G_firewall.conf` is self-contained — it uses internal `if`/`return` blocks and issues `return 403;` directly. Once the `include` is inside your `server {}` block (step 3 Option B), no additional activation directives are needed.
+
+For **Option A** (`firewall.conf`, map-based), add the blocking logic to your server blocks. The variables `$block_all`, `$bad_bot`, `$block_referer`, and the `limit_req`/`limit_conn` zones are all defined by `firewall.conf` in the `http {}` context:
 
 ```nginx
 server {
     listen 443 ssl http2;
     server_name example.com;
     
-    # Apply rate limiting
+    # Apply rate limiting (zones defined in firewall.conf / 8g-firewall.conf)
     limit_conn 8g_conn 20;
     limit_req zone=8g_global burst=50 nodelay;
     
-    # Block malicious requests
+    # Block malicious requests (variable set by firewall.conf / 8g-firewall.conf)
     if ($block_all) {
         return 444;  # Close connection without response
     }
