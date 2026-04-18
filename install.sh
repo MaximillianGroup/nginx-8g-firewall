@@ -67,19 +67,28 @@ else
     exit 1
 fi
 
-# Validate the existing Nginx configuration.
-# NOTE: The newly copied snippet ($SNIPPETS_DIR/8g-firewall.conf) is NOT
-# validated here because it has not been included in nginx.conf yet.
-# Run "sudo nginx -t" again after adding the include directive (step 1 below).
+# Detect whether the snippet is already included in the active Nginx config.
+SNIPPET_INCLUDED=false
+if nginx -T 2>/dev/null | grep -q "include.*8g-firewall\.conf"; then
+    SNIPPET_INCLUDED=true
+fi
+
+# Validate the Nginx configuration.
 echo ""
-echo "Validating existing Nginx configuration (before snippet is included)..."
+if $SNIPPET_INCLUDED; then
+    echo "Validating Nginx configuration (snippet is already included — full validation applies)..."
+else
+    echo "Validating Nginx configuration (snippet not yet included — only existing config is tested)..."
+fi
 if ! nginx -t; then
     echo -e "${RED}Error: Nginx configuration test failed. Fix any existing Nginx errors before enabling the firewall snippet.${NC}"
     echo "Please review /etc/nginx/nginx.conf for errors."
     exit 1
 fi
-echo -e "${GREEN}✓${NC} Existing Nginx configuration is valid"
-echo -e "${YELLOW}⚠${NC}  The firewall snippet has NOT been validated yet — run 'sudo nginx -t' again after adding the include (see step 1 below)."
+echo -e "${GREEN}✓${NC} Nginx configuration is valid"
+if ! $SNIPPET_INCLUDED; then
+    echo -e "${YELLOW}⚠${NC}  The firewall snippet has not been included yet — run 'sudo nginx -t' again after adding the include directive (see step 1 below)."
+fi
 # Create log directory if it doesn't exist
 LOG_DIR="/var/log/nginx"
 if [ ! -d "$LOG_DIR" ]; then
