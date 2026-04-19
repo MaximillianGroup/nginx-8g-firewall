@@ -69,7 +69,9 @@ fi
 
 # Detect whether the snippet is already included in the active Nginx config.
 SNIPPET_INCLUDED=false
-if nginx -T 2>/dev/null | grep -q "include.*8g-firewall\.conf"; then
+if nginx -T 2>/dev/null \
+    | grep -Ev '^[[:space:]]*#' \
+    | grep -Eq '^[[:space:]]*include[[:space:]].*8g-firewall\.conf[[:space:]]*;'; then
     SNIPPET_INCLUDED=true
 fi
 
