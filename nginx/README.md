@@ -15,7 +15,8 @@ This directory provides **two configuration files**. Choose the one that fits yo
 
 **Include location:** Inside the `http {}` block of your `nginx.conf`
 
-> **Note:** The install script copies `nginx/snippets/firewall.conf` to `/etc/nginx/snippets/8g-firewall.conf`.
+> **Note:** In this directory, the file is `snippets/firewall.conf`.
+> The install script refers to the same file as `nginx/snippets/firewall.conf` when run from the repository root, and copies it to `/etc/nginx/snippets/8g-firewall.conf`.
 > The examples below use the installed path.
 
 ```nginx
