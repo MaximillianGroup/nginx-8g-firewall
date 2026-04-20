@@ -7,6 +7,36 @@ An Nginx implementation of the [8G Firewall](https://perishablepress.com/8g-fire
 
 [![Copilot coding agent](https://github.com/MaximillianGroup/nginx-8g-firewall/actions/workflows/copilot-swe-agent/copilot/badge.svg)](https://github.com/MaximillianGroup/nginx-8g-firewall/actions/workflows/copilot-swe-agent/copilot)  [![Copilot code review](https://github.com/MaximillianGroup/nginx-8g-firewall/actions/workflows/copilot-pull-request-reviewer/copilot-pull-request-reviewer/badge.svg)](https://github.com/MaximillianGroup/nginx-8g-firewall/actions/workflows/copilot-pull-request-reviewer/copilot-pull-request-reviewer)
 
+## Repository Structure
+
+```
+nginx-8g-firewall/
+├── nginx/
+│   ├── snippets/
+│   │   ├── firewall.conf       ← RECOMMENDED: map-based version, include in http {} block
+│   │   └── 8G_firewall.conf    ← ALTERNATIVE: if-based version, include in server {} block
+│   └── nginx.conf              ← Example nginx.conf reference configuration
+├── apache/
+│   ├── 8g_firewall.txt         ← Original Apache .htaccess source (reference only)
+│   └── 8G-Changelog.txt        ← Upstream changelog
+├── install.sh                  ← Automated installation script
+├── QUICKSTART.md               ← 5-minute setup guide
+└── README.md                   ← This file
+```
+
+### Which configuration file should I use?
+
+| File | Include location | Approach | Best for |
+|------|-----------------|----------|----------|
+| `nginx/snippets/firewall.conf` | `http {}` block | `map`/`geo` directives | **Most deployments (recommended)** |
+| `nginx/snippets/8G_firewall.conf` | `server {}` block | `if`/`set` directives | Simple setups or per-vhost inclusion |
+
+**`nginx/snippets/firewall.conf` (recommended)** uses Nginx's `map` and `geo` directives to define detection rules and a combined `$block_all` variable. Because `map` and `geo` are evaluated lazily and at the `http` level, this version performs better under load and is easier to extend. Rate-limiting zones and security headers are also defined in this file.
+
+**`nginx/snippets/8G_firewall.conf` (alternative)** is a more direct port of the original Apache rules using sequential `if` blocks. It is self-contained and can be included directly inside any `server {}` block — useful if you only want to protect specific virtual hosts or prefer keeping all rules local to the server context.
+
+---
+
 ## Overview
 
 This file is a **lossless-style functional translation** of the original **8G Firewall v1.5 (Apache)** by Perishable Press into **NGINX syntax**.
@@ -141,11 +171,15 @@ Compared to Apache 8G:
 Deployment Location
 -------------------
 
-This firewall file is intended to be included inside a `server` block or via include:
+This firewall is intended to be included in the `http {}` block (recommended `firewall.conf`):
 
-`include /etc/nginx/firewall/8g-nginx.conf;`
+`include /etc/nginx/snippets/8g-firewall.conf;`
 
-Ensure it loads **after basic server directives but before application routing**.
+Or, for the `if`-based alternative, inside a `server {}` block:
+
+`include /etc/nginx/snippets/8G_firewall.conf;`
+
+Ensure the `http {}`-level include loads **before your `server {}` blocks**, and the `server {}`-level include loads **after basic server directives but before application routing**.
 
 * * * * *
 
@@ -200,7 +234,7 @@ Installation
 
 ### 1. Download the Firewall
 
-Clone this repository or download the `8g-firewall.conf` file:
+Clone this repository:
 
 ```bash
 git clone https://github.com/MaximillianGroup/nginx-8g-firewall.git
@@ -210,10 +244,15 @@ cd nginx-8g-firewall
 ### 2. Copy to Nginx Directory
 
 ```bash
-sudo cp 8g-firewall.conf /etc/nginx/
+sudo mkdir -p /etc/nginx/snippets
+sudo cp nginx/snippets/firewall.conf /etc/nginx/snippets/8g-firewall.conf
 ```
 
+> **Note:** If you prefer the `if`-based alternative, copy `nginx/snippets/8G_firewall.conf` to `/etc/nginx/snippets/8G_firewall.conf` instead and include it inside your `server {}` block (see Option B in step 3).
+
 ### 3. Include in Nginx Configuration
+
+**Option A — Recommended (`firewall.conf`, map-based):**
 
 Add the following line to your `nginx.conf` file inside the `http {}` block:
 
@@ -221,27 +260,45 @@ Add the following line to your `nginx.conf` file inside the `http {}` block:
 http {
     # ... other configurations ...
     
-    # Include 8G Firewall
-    include /etc/nginx/8g-firewall.conf;
+    # Include 8G Firewall (map-based — must be in http {} block)
+    include /etc/nginx/snippets/8g-firewall.conf;
     
     # ... rest of your configuration ...
 }
 ```
 
-### 4. Activate in Server Blocks
+**Option B — Alternative (`8G_firewall.conf`, if-based):**
 
-Add the blocking logic to your server blocks:
+Include the file directly inside your `server {}` block:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name example.com;
+
+    # Include 8G Firewall (if-based — included per server block)
+    include /etc/nginx/snippets/8G_firewall.conf;
+
+    location / { ... }
+}
+```
+
+### 4. Activate in Server Blocks (Option A only)
+
+> **Option B users:** skip this step. `8G_firewall.conf` is self-contained — it uses internal `if`/`return` blocks and issues `return 403;` directly. Once the `include` is inside your `server {}` block (step 3 Option B), no additional activation directives are needed.
+
+For **Option A** (`firewall.conf`, map-based), add the blocking logic to your server blocks. The variables `$block_all`, `$bad_bot`, `$block_referer`, and the `limit_req`/`limit_conn` zones are all defined by `firewall.conf` in the `http {}` context:
 
 ```nginx
 server {
     listen 443 ssl http2;
     server_name example.com;
     
-    # Apply rate limiting
+    # Apply rate limiting (zones defined in firewall.conf / 8g-firewall.conf)
     limit_conn 8g_conn 20;
     limit_req zone=8g_global burst=50 nodelay;
     
-    # Block malicious requests
+    # Block malicious requests (variable set by firewall.conf / 8g-firewall.conf)
     if ($block_all) {
         return 444;  # Close connection without response
     }
@@ -316,7 +373,7 @@ location ^~ /admin/ {
 
 ### Custom IP Blocking
 
-Add your own IP blocks in the `8g-firewall.conf` file:
+Add your own IP blocks in the installed `/etc/nginx/snippets/8g-firewall.conf` file (copied from `firewall.conf` in this repository), in the `geo $blocked_ip` section:
 
 ```nginx
 geo $blocked_ip {
@@ -337,7 +394,7 @@ The firewall creates three rate limiting zones:
 - `8g_login` - 2 requests/second per IP (for login pages)
 - `8g_conn` - Connection limit per IP
 
-Adjust these in `8g-firewall.conf` if needed:
+Adjust these in `nginx/snippets/firewall.conf` (or `/etc/nginx/snippets/8g-firewall.conf` if you have already installed the snippet) if needed:
 
 ```nginx
 limit_req_zone $binary_remote_addr zone=8g_global:10m rate=10r/s;
@@ -346,16 +403,16 @@ limit_req_zone $binary_remote_addr zone=8g_login:10m rate=2r/s;
 
 ### Logging
 
-Logging of blocked requests is disabled by default. To enable logging, uncomment the following line in `8g-firewall.conf`:
+Logging of blocked requests is disabled by default. To enable logging, uncomment the following line in `nginx/snippets/firewall.conf` (or `/etc/nginx/snippets/8g-firewall.conf` if you have already installed the snippet):
 
 ```nginx
-# In 8g-firewall.conf, remove the leading "#" from this line:
+# Remove the leading "#" from this line:
 access_log /var/log/nginx/8g-blocked.log blocked_8g if=$block_all;
 ```
 
 ### Security Headers
 
-Security headers are enabled by default. To customize, edit the headers section in `8g-firewall.conf`:
+Security headers are enabled by default. To customize, edit the headers section in `nginx/snippets/firewall.conf` (or `/etc/nginx/snippets/8g-firewall.conf` if you installed the snippet there):
 
 ```nginx
 add_header X-Frame-Options "SAMEORIGIN" always;
@@ -413,7 +470,7 @@ if ($block_request) {
 If legitimate requests are being blocked:
 
 1. Check `/var/log/nginx/8g-blocked.log` to see what triggered the block
-2. Review the specific map that caused the block
+2. Review the specific map in `nginx/snippets/firewall.conf` that caused the block
 3. Adjust the regex patterns or comment out overly aggressive rules
 
 ### Testing

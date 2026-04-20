@@ -23,8 +23,20 @@ sudo ./install.sh
 **Option B: Manual installation**
 
 ```bash
-sudo cp 8g-firewall.conf /etc/nginx/
+sudo mkdir -p /etc/nginx/snippets
+sudo cp nginx/snippets/firewall.conf /etc/nginx/snippets/8g-firewall.conf
 ```
+
+> **Which file?** The repository contains two configuration files:
+>
+> | File | Include in | Description |
+> |------|-----------|-------------|
+> | `nginx/snippets/firewall.conf` | `http {}` block | **Recommended** — map-based, includes rate limiting & security headers |
+> | `nginx/snippets/8G_firewall.conf` | `server {}` block | Alternative — direct if-based port of original Apache rules |
+>
+> The quickstart steps below continue with the **recommended map-based setup** using `nginx/snippets/firewall.conf`, copied to `/etc/nginx/snippets/8g-firewall.conf` and included from `http {}`.
+> If you choose `nginx/snippets/8G_firewall.conf` instead, include it inside your `server {}` block and **skip the later `$block_all` activation step**.
+> See [README.md](README.md) for a full comparison.
 
 ### Step 2: Update Your Nginx Configuration
 
@@ -40,7 +52,7 @@ Add this line inside the `http {}` block:
 http {
     # ... other config ...
     
-    include /etc/nginx/8g-firewall.conf;
+    include /etc/nginx/snippets/8g-firewall.conf;
     
     # ... rest of config ...
 }
@@ -87,14 +99,14 @@ server {
 
 ### Test 1: Normal Request (should work)
 
-**Note:** curl is blocked by default in the firewall. Use a web browser or temporarily comment out the curl blocking in `8g-firewall.conf` (line 55) for testing.
+**Note:** curl is blocked by default in the firewall. Use a web browser or temporarily comment out the curl blocking in the installed file `/etc/nginx/snippets/8g-firewall.conf` for testing (this file is copied from `nginx/snippets/firewall.conf` during installation).
 
 ```bash
 # Option 1: Use a web browser to visit your domain
 # Open https://your-domain.com in Firefox, Chrome, etc.
 
 # Option 2: Temporarily allow curl for testing
-# Edit /etc/nginx/8g-firewall.conf and comment out line 55:
+# Edit /etc/nginx/snippets/8g-firewall.conf and comment out the curl line:
 # "~*(?i)(curl|wget|python-requests|libwww-perl|go-http-client|axios)" 1;
 # Then reload nginx: sudo systemctl reload nginx
 # After testing, uncomment the line to restore full protection
@@ -217,7 +229,7 @@ server {
 sudo tail -100 /var/log/nginx/8g-blocked.log
 ```
 
-Then adjust the corresponding rule in `/etc/nginx/8g-firewall.conf`
+Then adjust the corresponding rule in `/etc/nginx/snippets/8g-firewall.conf`
 
 ### Problem: Configuration Test Fails
 
@@ -230,6 +242,7 @@ Common issues:
 - Forgot to close brackets `{}`
 - Missing semicolons `;`
 - Typos in variable names
+- Included `firewall.conf` inside `server {}` instead of `http {}` (map directives are http-level only)
 
 ### Problem: Firewall Not Blocking Attacks
 
@@ -238,8 +251,8 @@ Common issues:
 ## Next Steps
 
 - Read the full [README.md](README.md) for detailed documentation
-- Review [nginx.conf.example](nginx.conf.example) for a complete example
-- Customize the firewall rules in `8g-firewall.conf` for your specific needs
+- Review [nginx/nginx.conf](nginx/nginx.conf) for a complete example configuration
+- Customize the firewall rules in `nginx/snippets/firewall.conf` before copying/installing, or edit the installed file at `/etc/nginx/snippets/8g-firewall.conf` after installation
 - Enable logging to monitor blocked requests
 - Set up rate limiting appropriate for your traffic patterns
 
