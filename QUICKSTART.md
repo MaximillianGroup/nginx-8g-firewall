@@ -34,6 +34,8 @@ sudo cp nginx/snippets/firewall.conf /etc/nginx/snippets/8g-firewall.conf
 > | `nginx/snippets/firewall.conf` | `http {}` block | **Recommended** — map-based, includes rate limiting & security headers |
 > | `nginx/snippets/8G_firewall.conf` | `server {}` block | Alternative — direct if-based port of original Apache rules |
 >
+> The quickstart steps below continue with the **recommended map-based setup** using `nginx/snippets/firewall.conf`, copied to `/etc/nginx/snippets/8g-firewall.conf` and included from `http {}`.
+> If you choose `nginx/snippets/8G_firewall.conf` instead, include it inside your `server {}` block and **skip the later `$block_all` activation step**.
 > See [README.md](README.md) for a full comparison.
 
 ### Step 2: Update Your Nginx Configuration
