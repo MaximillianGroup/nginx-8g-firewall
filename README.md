@@ -509,6 +509,14 @@ Contributions are welcome! Please submit pull requests or open issues for:
 - Documentation enhancements
 - Bug fixes
 
+Before contributing, review:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- [SECURITY.md](SECURITY.md)
+- [SUPPORT.md](SUPPORT.md)
+- [CHANGELOG.md](CHANGELOG.md)
+
 ## Disclaimer
 
 This firewall provides a strong layer of security but should be part of a comprehensive security strategy. Always keep your software updated and follow security best practices.

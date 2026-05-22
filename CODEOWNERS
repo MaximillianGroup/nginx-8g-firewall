@@ -1,0 +1,7 @@
+# Default ownership
+* @MaximillianGroupInc
+
+# Governance and security-sensitive areas
+.github/ @MaximillianGroupInc
+install.sh @MaximillianGroupInc
+nginx/snippets/ @MaximillianGroupInc
