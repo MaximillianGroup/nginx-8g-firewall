@@ -38,7 +38,9 @@ jobs:
                   listen 8080;
                   limit_conn 8g_conn 20;
                   limit_req zone=8g_global burst=50 nodelay;
-                  if ($block_all) { return 444; }
+                  if (\$block_all) {
+                      return 444;
+                  }
               }
           }
           EOF
