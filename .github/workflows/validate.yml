@@ -1,0 +1,64 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install nginx
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nginx
+
+      - name: Validate install script syntax
+        run: bash -n install.sh
+
+      - name: Validate map-based snippet syntax
+        run: |
+          cat > /tmp/nginx-firewall-map.conf <<EOF
+          pid /tmp/nginx-map.pid;
+          error_log stderr notice;
+          events {}
+          http {
+              include /etc/nginx/mime.types;
+              access_log off;
+              include $GITHUB_WORKSPACE/nginx/snippets/firewall.conf;
+              server {
+                  listen 8080;
+                  limit_conn 8g_conn 20;
+                  limit_req zone=8g_global burst=50 nodelay;
+                  if (\$block_all) {
+                      return 444;
+                  }
+              }
+          }
+          EOF
+          nginx -t -c /tmp/nginx-firewall-map.conf
+
+      - name: Validate if-based snippet syntax
+        run: |
+          cat > /tmp/nginx-firewall-if.conf <<EOF
+          pid /tmp/nginx-if.pid;
+          error_log stderr notice;
+          events {}
+          http {
+              include /etc/nginx/mime.types;
+              access_log off;
+              server {
+                  listen 8081;
+                  include $GITHUB_WORKSPACE/nginx/snippets/8G_firewall.conf;
+              }
+          }
+          EOF
+          nginx -t -c /tmp/nginx-firewall-if.conf
